@@ -105,7 +105,7 @@ if ! bosh env --environment $DIRECTOR_ADDRESS; then
   ;
 fi
 
-if ! bosh stemcells -e $CONCOURSE_BOSH_ENV | grep bosh-aws-xen-hvm-ubuntu-trusty-go_agent; then
+if ! bosh stemcells -e $CONCOURSE_BOSH_ENV | grep -q bosh-aws-xen-hvm-ubuntu-trusty-go_agent; then
   bosh upload-stemcell -e $CONCOURSE_BOSH_ENV https://s3.amazonaws.com/bosh-core-stemcells/aws/bosh-stemcell-3363.9-aws-xen-hvm-ubuntu-trusty-go_agent.tgz
 fi
 
@@ -127,7 +127,7 @@ concourse_db_disk_type: 5GB
 EOF
 fi
 
-if ! bosh deployments -e $CONCOURSE_BOSH_ENV | grep $CONCOURSE_DEPLOYMENT_NAME; then
+if ! bosh deployments -e $CONCOURSE_BOSH_ENV | grep -q $CONCOURSE_DEPLOYMENT_NAME; then
   bosh deploy \
     --non-interactive \
     --environment $CONCOURSE_BOSH_ENV \
@@ -147,7 +147,7 @@ if fly login \
   --target $CONCOURSE_TARGET \
   --concourse-url "http://$CONCOURSE_LBS_DOMAIN" \
   --username admin \
-  --password password then
+  --password password 2>/dev/null; then
   echo y | fly set-team \
     --target $CONCOURSE_TARGET \
     --team-name main \
@@ -155,4 +155,3 @@ if fly login \
     --basic-auth-password=$CONCOURSE_PASSWORD \
   ;
 fi
-
