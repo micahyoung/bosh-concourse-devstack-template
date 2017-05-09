@@ -35,8 +35,7 @@ fi
 
 bbl_cmd="bbl --state-dir state/"
 if ! [ -f bin/bbl ]; then
-  curl -JLO "https://github.com/cloudfoundry/bosh-bootloader/releases/download/v3.0.4/bbl-v3.0.4_osx"
-  mv bbl-v3.0.4_osx bin/bbl
+  curl -L "https://github.com/cloudfoundry/bosh-bootloader/releases/download/v3.0.4/bbl-v3.0.4_osx" > bin/bbl
   chmod +x bin/bbl
 fi
 
