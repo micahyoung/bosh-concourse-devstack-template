@@ -17,6 +17,11 @@ PRIVATE_CIDR=10.0.0.0/24
 PRIVATE_GATEWAY_IP=10.0.0.1
 PRIVATE_IP=10.0.0.3
 NETWORK_UUID=8e413f91-6ff7-4e97-b534-9287adb5107d
+OPENSTACK_IP=172.18.161.6
+DNS_IP=10.0.0.2
+network_interface=ens7
+stemcell_url="http://s3.amazonaws.com/bosh-core-stemcells/openstack/bosh-stemcell-3363.9-openstack-kvm-ubuntu-trusty-go_agent.tgz"
+stemcell_sha1=1cddb531c96cc4022920b169a37eda71069c87dd
 set -x
 
 mkdir -p bin
@@ -70,16 +75,6 @@ concourse_db_disk_type: 5GB
 EOF
 fi
 
-OPENSTACK_IP=172.18.161.6
-DNS_IP=10.0.0.2
-proxy_ip="172.18.161.5"
-network_interface=ens7
-stemcell_url="http://s3.amazonaws.com/bosh-core-stemcells/openstack/bosh-stemcell-3363.9-openstack-kvm-ubuntu-trusty-go_agent.tgz"
-stemcell_sha1=1cddb531c96cc4022920b169a37eda71069c87dd
-
-http_proxy="http://$proxy_ip:8123"
-https_proxy="http://$proxy_ip:8123"
-no_proxy="127.0.0.1,localhost,$OPENSTACK_IP,$proxy_ip,$PRIVATE_IP,$DIRECTOR_FLOATING_IP,$PRIVATE_GATEWAY_IP,$DNS_IP"
 
 cat > bosh-releases.yml <<EOF
 - type: replace
@@ -107,16 +102,8 @@ cat > bosh-disk-pools.yml <<EOF
     disk_size: 15_000
 EOF
 
-cat > bosh-env.yml <<EOF
-- type: replace
-  path: /instance_groups/name=bosh/properties/env?
-  value:
-    http_proxy: $http_proxy
-    https_proxy: $https_proxy
-    no_proxy: $no_proxy
-EOF
-
-cat > cloud-config.yml <<EOF
+if ! [ -f cloud-config.yml ]; then
+  cat > cloud-config.yml <<EOF
 azs:
 - name: z1
   cloud_properties:
@@ -164,8 +151,10 @@ compilation:
   network: private
   <<: *vm_type_defaults
 EOF
+fi
 
-cat > state/bosh.pem <<EOF
+if ! [ -f state/bosh.pem ]; then
+  cat > state/bosh.pem <<EOF
 -----BEGIN RSA PRIVATE KEY-----
 MIIEpAIBAAKCAQEA44kTjqdgpX4jdP/ZPpXv4zKh0yNP2pIIIAmdoQ3/WhoTRWlc
 HZ1P8qyrQiKG2L+iz1/7sEAcF1IFkOXs5X33u/UVibOzkGBLDfGjkpanAan2qdH9
@@ -194,6 +183,8 @@ X5xdkeyISESEgpY9Qf+V7wy/YS4V9schYbXMnRulP5xCuxmhjm1bTw3w6yc3RCzG
 4WeUesbrO/5ffHteVU01BGN8DLF3LjfwojBGheV8Y4pM1KtIKdfJyg==
 -----END RSA PRIVATE KEY-----
 EOF
+  chmod 600 state/bosh.pem
+fi
 
 cat > bosh-concourse-deployment.yml <<EOF
 ---
@@ -287,23 +278,19 @@ update:
   update_watch_time: 1000-60000
 EOF
 
-cat > concourse-groundcrew-properties.yml <<EOF
-- type: replace
-  path: /instance_groups/name=worker/jobs/name=groundcrew/properties?
-  value:
-    http_proxy_url: $http_proxy
-    https_proxy_url: $https_proxy
-    no_proxy: [$no_proxy]
-EOF
+if ! dpkg -l build-essential; then
+  DEBIAN_FRONTEND=noninteractive sudo apt-get -qqy update
+  DEBIAN_FRONTEND=noninteractive sudo apt-get install -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" -qqy \
+    build-essential zlibc zlib1g-dev ruby ruby-dev openssl libxslt-dev libxml2-dev libssl-dev libreadline6 libreadline6-dev libyaml-dev libsqlite3-dev sqlite3
+fi
 
-DEBIAN_FRONTEND=noninteractive sudo apt-get -qqy update
-DEBIAN_FRONTEND=noninteractive sudo apt-get install -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" -qqy \
-  build-essential zlibc zlib1g-dev ruby ruby-dev openssl libxslt-dev libxml2-dev libssl-dev libreadline6 libreadline6-dev libyaml-dev libsqlite3-dev sqlite3
+if ! route -n | grep $DIRECTOR_FLOATING_IP; then
+  sudo route add $DIRECTOR_FLOATING_IP gw $OPENSTACK_IP || true
+fi
 
-chmod 600 state/bosh.pem
-
-sudo route add $DIRECTOR_FLOATING_IP gw $OPENSTACK_IP || true
-sudo route add -net $PRIVATE_CIDR gw $OPENSTACK_IP || true
+if ! route -n | grep $PRIVATE_CIDR; then
+  sudo route add -net $PRIVATE_CIDR gw $OPENSTACK_IP || true
+fi
 
 if ! [ -d bosh-deployment ]; then
   git clone https://github.com/cloudfoundry/bosh-deployment.git
@@ -317,7 +304,6 @@ bosh create-env bosh-deployment/bosh.yml \
   -o bosh-releases.yml \
   -o bosh-stemcells.yml \
   -o bosh-disk-pools.yml \
-  -o bosh-env.yml \
   --vars-store state/bosh-creds.yml \
   --tty \
   ;
