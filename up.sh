@@ -9,9 +9,9 @@ if ! [ -d state/ ]; then
 fi
 
 source ./state/env.sh
-CONCOURSE_DEPLOYMENT_NAME=${CONCOURSE_DEPLOYMENT_NAME:?"!"}
-CONCOURSE_USERNAME=${CONCOURSE_USERNAME:?"!"}
-CONCOURSE_PASSWORD=${CONCOURSE_PASSWORD:?"!"}
+true ${CONCOURSE_DEPLOYMENT_NAME:?"!"}
+true ${CONCOURSE_USERNAME:?"!"}
+true ${CONCOURSE_PASSWORD:?"!"}
 DIRECTOR_FLOATING_IP=172.18.161.254
 PRIVATE_CIDR=10.0.0.0/24
 PRIVATE_GATEWAY_IP=10.0.0.1
@@ -32,8 +32,7 @@ if ! [ -f bin/bosh ]; then
   chmod +x bin/bosh
 fi
 
-if ! [ -f state/bosh-creds.yml ]; then
-  cat > state/bosh-creds.yml <<EOF
+cat > state/bosh-creds.yml <<EOF
 admin_password: admin
 api_key: password
 auth_url: http://172.18.161.6:5000/v2.0
@@ -54,10 +53,8 @@ openstack_username: admin
 private_key: ../state/bosh.pem
 region: RegionOne
 EOF
-fi
 
-if ! [ -f state/concourse-creds.yml ]; then
-  cat > state/concourse-creds.yml <<EOF
+cat > state/concourse-creds.yml <<EOF
 concourse_deployment_name: $CONCOURSE_DEPLOYMENT_NAME
 concourse_basic_auth_username: $CONCOURSE_USERNAME
 concourse_basic_auth_password: $CONCOURSE_PASSWORD
@@ -73,8 +70,6 @@ concourse_worker_vm_extensions: 50GB_ephemeral_disk
 concourse_web_vm_extensions: lb
 concourse_db_disk_type: 5GB
 EOF
-fi
-
 
 cat > bosh-releases.yml <<EOF
 - type: replace
@@ -102,8 +97,7 @@ cat > bosh-disk-pools.yml <<EOF
     disk_size: 15_000
 EOF
 
-if ! [ -f cloud-config.yml ]; then
-  cat > cloud-config.yml <<EOF
+cat > cloud-config.yml <<EOF
 azs:
 - name: z1
   cloud_properties:
@@ -151,10 +145,8 @@ compilation:
   network: private
   <<: *vm_type_defaults
 EOF
-fi
 
-if ! [ -f state/bosh.pem ]; then
-  cat > state/bosh.pem <<EOF
+cat > state/bosh.pem <<EOF
 -----BEGIN RSA PRIVATE KEY-----
 MIIEpAIBAAKCAQEA44kTjqdgpX4jdP/ZPpXv4zKh0yNP2pIIIAmdoQ3/WhoTRWlc
 HZ1P8qyrQiKG2L+iz1/7sEAcF1IFkOXs5X33u/UVibOzkGBLDfGjkpanAan2qdH9
@@ -183,8 +175,7 @@ X5xdkeyISESEgpY9Qf+V7wy/YS4V9schYbXMnRulP5xCuxmhjm1bTw3w6yc3RCzG
 4WeUesbrO/5ffHteVU01BGN8DLF3LjfwojBGheV8Y4pM1KtIKdfJyg==
 -----END RSA PRIVATE KEY-----
 EOF
-  chmod 600 state/bosh.pem
-fi
+chmod 600 state/bosh.pem
 
 cat > bosh-concourse-deployment.yml <<EOF
 ---

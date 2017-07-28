@@ -1,0 +1,89 @@
+---
+name: bosh-concourse
+
+releases:
+- name: concourse
+  url: https://bosh.io/d/github.com/concourse/concourse?v=2.7.0
+  sha1: 826932f631d0941b3e4cc9cb19e0017c7f989b56
+  version: 2.7.0
+- name: garden-runc
+  url: https://bosh.io/d/github.com/cloudfoundry/garden-runc-release?v=1.3.0
+  sha1: 816044289381e3b7b66dd73fbcb20005594026a3
+  version: 1.3.0
+
+stemcells:
+- alias: trusty
+  os: ubuntu-trusty
+  version: latest
+
+instance_groups:
+- name: web
+  instances: 1
+  vm_type: web
+  stemcell: trusty
+  azs: [z1]
+  networks:
+  - name: private
+    default: [dns, gateway]
+  - name: public
+    static_ips: [((concourse_floating_ip))]
+  jobs:
+  - name: atc
+    release: concourse
+    properties:
+      external_url: ((concourse_external_url))
+      basic_auth_username: ((concourse_basic_auth_username))
+      basic_auth_password: ((concourse_basic_auth_password))
+      postgresql_database: ((concourse_atc_db_name))
+  - name: tsa
+    release: concourse
+    properties: {}
+
+- name: db
+  instances: 1
+  # replace with a VM type from your BOSH Director's cloud config
+  vm_type: database
+  stemcell: trusty
+  # replace with a disk type from your BOSH Director's cloud config
+  persistent_disk_type: default
+  azs: [z1]
+  networks: [{name: private}]
+  jobs:
+  - name: postgresql
+    release: concourse
+    properties:
+      databases:
+      - name: ((concourse_atc_db_name))
+        role: ((concourse_atc_db_role))
+        password: ((concourse_atc_db_password))
+
+- name: worker
+  instances: 1
+  # replace with a VM type from your BOSH Director's cloud config
+  vm_type: worker
+  stemcell: trusty
+  azs: [z1]
+  networks: [{name: private}]
+
+  jobs:
+  - name: groundcrew
+    release: concourse
+    properties: {}
+
+  - name: baggageclaim
+    release: concourse
+    properties: {}
+
+  - name: garden
+    release: garden-runc
+    properties:
+      garden:
+        listen_network: tcp
+        listen_address: 0.0.0.0:7777
+
+update:
+  canaries: 1
+  max_in_flight: 1
+  serial: false
+  canary_watch_time: 1000-60000
+  update_watch_time: 1000-60000

@@ -1,0 +1,11 @@
+<volume type='file'>
+  <name>devstack-libvirt-test/root.vmdk</name>
+  <source>
+  </source>
+  <capacity unit='bytes'>34359738368</capacity>
+  <allocation unit='bytes'>34359738368</allocation>
+  <target>
+    <path>[datastore1] devstack-libvirt-test/root.vmdk</path>
+    <format type='vmdk'/>
+  </target>
+</volume>

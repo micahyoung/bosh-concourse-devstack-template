@@ -1,0 +1,46 @@
+azs:
+- name: z1
+  cloud_properties:
+    availability_zone: nova
+
+vm_type_defaults: &vm_type_defaults
+  az: z1
+  cloud_properties:
+    instance_type: m1.small
+
+vm_types:
+- name: default
+  <<: *vm_type_defaults
+- name: web
+  <<: *vm_type_defaults
+- name: database
+  <<: *vm_type_defaults
+- name: worker
+  <<: *vm_type_defaults
+
+disk_types:
+- name: default
+  disk_size: 2_000
+- name: database
+  disk_size: 2_000
+
+networks:
+- name: private
+  type: manual
+  subnets:
+  - range: 10.0.0.0/24
+    gateway: 10.0.0.1
+    reserved: 10.0.0.2
+    cloud_properties:
+      net_id: 8e413f91-6ff7-4e97-b534-9287adb5107d
+      security_groups: [bosh]
+    az: z1
+- name: public
+  type: vip
+  az: z1
+
+compilation:
+  workers: 3
+  reuse_compilation_vms: true
+  network: private
+  <<: *vm_type_defaults
