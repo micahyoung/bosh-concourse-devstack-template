@@ -1,4 +1,6 @@
+.DS_Store
 bin/
 state/
 meta-data
 user-data
+bosh-deployment/

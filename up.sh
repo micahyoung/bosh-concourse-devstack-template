@@ -16,12 +16,17 @@ DIRECTOR_FLOATING_IP=172.18.161.254
 PRIVATE_CIDR=10.0.0.0/24
 PRIVATE_GATEWAY_IP=10.0.0.1
 PRIVATE_IP=10.0.0.3
-NETWORK_UUID=8e413f91-6ff7-4e97-b534-9287adb5107d
-OPENSTACK_IP=172.18.161.6
-DNS_IP=10.0.0.2
-network_interface=ens7
+NETWORK_UUID=a7742f70-7fcc-43c2-afce-82f73e6c75c9
+OPENSTACK_IP=10.10.0.5
+DNS_IP=8.8.8.8
+network_interface=ens192
 stemcell_url="http://s3.amazonaws.com/bosh-core-stemcells/openstack/bosh-stemcell-3363.9-openstack-kvm-ubuntu-trusty-go_agent.tgz"
 stemcell_sha1=1cddb531c96cc4022920b169a37eda71069c87dd
+concourse_release_url='https://bosh.io/d/github.com/concourse/concourse?v=2.7.0'
+concourse_release_sha1='826932f631d0941b3e4cc9cb19e0017c7f989b56'
+garden_runc_release_url='https://bosh.io/d/github.com/cloudfoundry/garden-runc-release?v=1.3.0'
+garden_runc_release_sha1='816044289381e3b7b66dd73fbcb20005594026a3'
+
 set -x
 
 mkdir -p bin
@@ -32,10 +37,10 @@ if ! [ -f bin/bosh ]; then
   chmod +x bin/bosh
 fi
 
-cat > state/bosh-creds.yml <<EOF
+cat > bosh-vars.yml <<EOF
 admin_password: admin
 api_key: password
-auth_url: http://172.18.161.6:5000/v2.0
+auth_url: http://$OPENSTACK_IP:5000/v2.0
 az: nova
 default_key_name: bosh
 default_security_groups: [bosh]
@@ -60,8 +65,6 @@ concourse_basic_auth_username: $CONCOURSE_USERNAME
 concourse_basic_auth_password: $CONCOURSE_PASSWORD
 concourse_floating_ip: 172.18.161.253
 concourse_external_url: http://ci.foo.com
-concourse_basic_auth_username: admin
-concourse_basic_auth_password: admin
 concourse_atc_db_name: atc
 concourse_atc_db_role: concourse
 concourse_atc_db_password: concourse
@@ -97,7 +100,7 @@ cat > bosh-disk-pools.yml <<EOF
     disk_size: 15_000
 EOF
 
-cat > cloud-config.yml <<EOF
+cat > state/cloud-config.yml <<EOF
 azs:
 - name: z1
   cloud_properties:
@@ -130,7 +133,7 @@ networks:
   subnets:
   - range: $PRIVATE_CIDR
     gateway: $PRIVATE_GATEWAY_IP
-    reserved: $DNS_IP
+    reserved: $PRIVATE_GATEWAY_IP-$PRIVATE_IP
     cloud_properties:
       net_id: $NETWORK_UUID
       security_groups: [bosh]
@@ -183,12 +186,8 @@ name: bosh-concourse
 
 releases:
 - name: concourse
-  url: https://bosh.io/d/github.com/concourse/concourse?v=2.7.0
-  sha1: 826932f631d0941b3e4cc9cb19e0017c7f989b56
   version: 2.7.0
 - name: garden-runc
-  url: https://bosh.io/d/github.com/cloudfoundry/garden-runc-release?v=1.3.0
-  sha1: 816044289381e3b7b66dd73fbcb20005594026a3
   version: 1.3.0
 
 stemcells:
@@ -269,43 +268,48 @@ update:
   update_watch_time: 1000-60000
 EOF
 
-if ! dpkg -l build-essential; then
+if ! dpkg -l build-essential ruby; then
   DEBIAN_FRONTEND=noninteractive sudo apt-get -qqy update
   DEBIAN_FRONTEND=noninteractive sudo apt-get install -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" -qqy \
     build-essential zlibc zlib1g-dev ruby ruby-dev openssl libxslt-dev libxml2-dev libssl-dev libreadline6 libreadline6-dev libyaml-dev libsqlite3-dev sqlite3
-fi
-
-if ! route -n | grep $DIRECTOR_FLOATING_IP; then
-  sudo route add $DIRECTOR_FLOATING_IP gw $OPENSTACK_IP || true
-fi
-
-if ! route -n | grep $PRIVATE_CIDR; then
-  sudo route add -net $PRIVATE_CIDR gw $OPENSTACK_IP || true
 fi
 
 if ! [ -d bosh-deployment ]; then
   git clone https://github.com/cloudfoundry/bosh-deployment.git
 fi
 
+if ! [ -f bin/stemcell.tgz ]; then
+  curl -L $stemcell_url > bin/stemcell.tgz
+fi
+
+if ! [ -f bin/concourse_release.tgz ]; then
+  curl -L $concourse_release_url > bin/concourse_release.tgz
+fi
+
+if ! [ -f bin/garden_runc_release.tgz ]; then
+  curl -L $garden_runc_release_url > bin/garden_runc_release.tgz
+fi
+
 bosh create-env bosh-deployment/bosh.yml \
-  --state bosh-deployment-state.json \
+  --state state/bosh-deployment-state.json \
   -o bosh-deployment/openstack/cpi.yml \
   -o bosh-deployment/openstack/keystone-v2.yml \
   -o bosh-deployment/external-ip-not-recommended.yml \
   -o bosh-releases.yml \
   -o bosh-stemcells.yml \
   -o bosh-disk-pools.yml \
+  --vars-file bosh-vars.yml \
   --vars-store state/bosh-creds.yml \
   --tty \
   ;
 
-bosh interpolate ./bosh-creds.yml --path /director_ssl/ca > director.pem
-bosh alias-env --ca-cert director.pem -e $DIRECTOR_FLOATING_IP bosh
+bosh alias-env --ca-cert <(bosh interpolate state/bosh-creds.yml --path /director_ssl/ca) -e $DIRECTOR_FLOATING_IP bosh
 bosh log-in -e bosh --client admin --client-secret admin
-bosh update-cloud-config -e bosh --non-interactive cloud-config.yml
-bosh upload-stemcell -e bosh $stemcell_url
+bosh update-cloud-config -e bosh --non-interactive state/cloud-config.yml
+bosh upload-stemcell -e bosh bin/stemcell.tgz
+bosh upload-release -e bosh bin/concourse_release.tgz
+bosh upload-release -e bosh bin/garden_runc_release.tgz
 bosh deploy -e bosh -d bosh-concourse bosh-concourse-deployment.yml \
-  -o concourse-groundcrew-properties.yml \
   --vars-store state/concourse-creds.yml \
   -n \
   ;
