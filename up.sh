@@ -13,19 +13,14 @@ true ${CONCOURSE_DEPLOYMENT_NAME:?"!"}
 true ${CONCOURSE_USERNAME:?"!"}
 true ${CONCOURSE_PASSWORD:?"!"}
 DIRECTOR_FLOATING_IP=172.18.161.254
+CONCOURSE_FLOATING_IP=172.18.161.253
 PRIVATE_CIDR=10.0.0.0/24
 PRIVATE_GATEWAY_IP=10.0.0.1
 PRIVATE_IP=10.0.0.3
-NETWORK_UUID=a7742f70-7fcc-43c2-afce-82f73e6c75c9
+PRIVATE_NETWORK_UUID=a7742f70-7fcc-43c2-afce-82f73e6c75c9
 OPENSTACK_IP=10.10.0.5
+HTTP_PROXY="http://10.10.0.5:8123"
 DNS_IP=8.8.8.8
-network_interface=ens192
-stemcell_url="http://s3.amazonaws.com/bosh-core-stemcells/openstack/bosh-stemcell-3363.9-openstack-kvm-ubuntu-trusty-go_agent.tgz"
-stemcell_sha1=1cddb531c96cc4022920b169a37eda71069c87dd
-concourse_release_url='https://bosh.io/d/github.com/concourse/concourse?v=2.7.0'
-concourse_release_sha1='826932f631d0941b3e4cc9cb19e0017c7f989b56'
-garden_runc_release_url='https://bosh.io/d/github.com/cloudfoundry/garden-runc-release?v=1.3.0'
-garden_runc_release_sha1='816044289381e3b7b66dd73fbcb20005594026a3'
 
 set -x
 
@@ -37,33 +32,11 @@ if ! [ -f bin/bosh ]; then
   chmod +x bin/bosh
 fi
 
-cat > bosh-vars.yml <<EOF
-admin_password: admin
-api_key: password
-auth_url: http://$OPENSTACK_IP:5000/v2.0
-az: nova
-default_key_name: bosh
-default_security_groups: [bosh]
-director_name: bosh
-external_ip: $DIRECTOR_FLOATING_IP
-internal_cidr: $PRIVATE_CIDR
-internal_gw: $PRIVATE_GATEWAY_IP
-internal_ip: $PRIVATE_IP
-net_id: $NETWORK_UUID
-openstack_domain: nova
-openstack_password: password
-openstack_project: demo
-openstack_tenant: demo
-openstack_username: admin
-private_key: ../state/bosh.pem
-region: RegionOne
-EOF
-
 cat > state/concourse-creds.yml <<EOF
 concourse_deployment_name: $CONCOURSE_DEPLOYMENT_NAME
 concourse_basic_auth_username: $CONCOURSE_USERNAME
 concourse_basic_auth_password: $CONCOURSE_PASSWORD
-concourse_floating_ip: 172.18.161.253
+concourse_floating_ip: $CONCOURSE_FLOATING_IP
 concourse_external_url: http://ci.foo.com
 concourse_atc_db_name: atc
 concourse_atc_db_role: concourse
@@ -88,8 +61,8 @@ cat > bosh-stemcells.yml <<EOF
 - type: replace
   path: /resource_pools/name=vms/stemcell?
   value:
-    url: $stemcell_url
-    sha1: $stemcell_sha1
+    url: http://s3.amazonaws.com/bosh-core-stemcells/openstack/bosh-stemcell-3363.9-openstack-kvm-ubuntu-trusty-go_agent.tgz
+    sha1: 1cddb531c96cc4022920b169a37eda71069c87dd
 EOF
 
 cat > bosh-disk-pools.yml <<EOF
@@ -120,14 +93,88 @@ vm_types:
   <<: *vm_type_defaults
 - name: worker
   <<: *vm_type_defaults
+- name: t2.small
+  az: z1
+  cloud_properties:
+    instance_type: m1.small
+- name: m3.medium
+  az: z1
+  cloud_properties:
+    instance_type: m1.medium
+- name: m3.large
+  az: z1
+  cloud_properties:
+    instance_type: m1.large
+- name: c3.large
+  az: z1
+  cloud_properties:
+    instance_type: m1.large
+- name: r3.xlarge
+  az: z1
+  cloud_properties:
+    instance_type: r3.xlarge
+
+vm_extensions:
+- name: 5GB_ephemeral_disk
+  cloud_properties:
+    ephemeral_disk:
+      size: 5_000
+- name: 10GB_ephemeral_disk
+  cloud_properties:
+    ephemeral_disk:
+      size: 10_000
+- name: 50GB_ephemeral_disk
+  cloud_properties:
+    ephemeral_disk:
+      size: 10_000
+- name: 100GB_ephemeral_disk
+  cloud_properties:
+    ephemeral_disk:
+      size: 100_000
+- name: 500GB_ephemeral_disk
+  cloud_properties:
+    ephemeral_disk:
+      size: 10_000
+- name: 1TB_ephemeral_disk
+  cloud_properties:
+    ephemeral_disk:
+      size: 10_000
+- name: ssh-proxy-and-router-lb
+  cloud_properties:
+    ports:
+    - host: 80
+    - host: 443
+    - host: 2222
+- name: cf-tcp-router-network-properties
+  cloud_properties:
+    ports:
+    - host: 1024-1123
+- name: cf-router-network-properties
+- name: diego-ssh-proxy-network-properties
 
 disk_types:
 - name: default
   disk_size: 2_000
 - name: database
   disk_size: 2_000
+- name: 5GB
+  disk_size: 5_000
+- name: 10GB
+  disk_size: 10_000
+- name: 100GB
+  disk_size: 10_000
 
 networks:
+- name: default
+  type: manual
+  subnets:
+  - range: $PRIVATE_CIDR
+    gateway: $PRIVATE_GATEWAY_IP
+    reserved: $PRIVATE_GATEWAY_IP-$PRIVATE_IP
+    cloud_properties:
+      net_id: $PRIVATE_NETWORK_UUID
+      security_groups: [bosh]
+    az: z1
 - name: private
   type: manual
   subnets:
@@ -135,7 +182,7 @@ networks:
     gateway: $PRIVATE_GATEWAY_IP
     reserved: $PRIVATE_GATEWAY_IP-$PRIVATE_IP
     cloud_properties:
-      net_id: $NETWORK_UUID
+      net_id: $PRIVATE_NETWORK_UUID
       security_groups: [bosh]
     az: z1
 - name: public
@@ -143,10 +190,11 @@ networks:
   az: z1
 
 compilation:
-  workers: 3
+  workers: 4
   reuse_compilation_vms: true
   network: private
-  <<: *vm_type_defaults
+  az: z1
+  cloud_properties: instance_type: m1.xlarge
 EOF
 
 cat > state/bosh.pem <<EOF
@@ -268,26 +316,26 @@ update:
   update_watch_time: 1000-60000
 EOF
 
-if ! dpkg -l build-essential ruby; then
+if ! dpkg -l build-essential ruby polipo; then
+  sudo mkdir /etc/polipo
+  sudo tee /etc/polipo/config 2>/dev/null <<EOF
+logSyslog = true
+logFile = /var/log/polipo/polipo.log
+proxyAddress = "0.0.0.0"    # IPv4 only
+allowedClients = 127.0.0.1, 172.18.161.0/24, $OPENSTACK_IP, $PRIVATE_CIDR
+EOF
+
   DEBIAN_FRONTEND=noninteractive sudo apt-get -qqy update
   DEBIAN_FRONTEND=noninteractive sudo apt-get install -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" -qqy \
-    build-essential zlibc zlib1g-dev ruby ruby-dev openssl libxslt-dev libxml2-dev libssl-dev libreadline6 libreadline6-dev libyaml-dev libsqlite3-dev sqlite3
+    build-essential zlibc zlib1g-dev ruby ruby-dev openssl libxslt-dev libxml2-dev libssl-dev libreadline6 libreadline6-dev libyaml-dev libsqlite3-dev sqlite3 polipo
 fi
 
 if ! [ -d bosh-deployment ]; then
   git clone https://github.com/cloudfoundry/bosh-deployment.git
 fi
 
-if ! [ -f bin/stemcell.tgz ]; then
-  curl -L $stemcell_url > bin/stemcell.tgz
-fi
-
-if ! [ -f bin/concourse_release.tgz ]; then
-  curl -L $concourse_release_url > bin/concourse_release.tgz
-fi
-
-if ! [ -f bin/garden_runc_release.tgz ]; then
-  curl -L $garden_runc_release_url > bin/garden_runc_release.tgz
+if ! [ -d cf-deployment ]; then
+  git clone https://github.com/cloudfoundry/cf-deployment.git
 fi
 
 bosh create-env bosh-deployment/bosh.yml \
@@ -295,21 +343,53 @@ bosh create-env bosh-deployment/bosh.yml \
   -o bosh-deployment/openstack/cpi.yml \
   -o bosh-deployment/openstack/keystone-v2.yml \
   -o bosh-deployment/external-ip-not-recommended.yml \
+  -o bosh-deployment/misc/proxy.yml \
   -o bosh-releases.yml \
   -o bosh-stemcells.yml \
   -o bosh-disk-pools.yml \
-  --vars-file bosh-vars.yml \
+  -v admin_password=admin \
+  -v api_key=password \
+  -v auth_url=http://$OPENSTACK_IP:5000/v2.0 \
+  -v az=nova \
+  -v default_key_name=bosh \
+  -v default_security_groups=[bosh] \
+  -v director_name=bosh \
+  -v external_ip=$DIRECTOR_FLOATING_IP \
+  -v internal_cidr=$PRIVATE_CIDR \
+  -v internal_gw=$PRIVATE_GATEWAY_IP \
+  -v internal_ip=$PRIVATE_IP \
+  -v net_id=$PRIVATE_NETWORK_UUID \
+  -v openstack_domain=nova \
+  -v openstack_password=password \
+  -v openstack_project=demo \
+  -v openstack_tenant=demo \
+  -v openstack_username=admin \
+  -v private_key=../state/bosh.pem \ 
+  -v region=RegionOne \
+  -v http_proxy=$HTTP_PROXY \
+  -v https_proxy=$HTTP_PROXY \
+  -v no_proxy="localhost,127.0.0.1,$OPENSTACK_IP,$PRIVATE_IP,$PRIVATE_CIDR,$DIRECTOR_FLOATING_IP,$PRIVATE_GATEWAY_IP,$DNS_IP,$CONCOURSE_FLOATING_IP" \
   --vars-store state/bosh-creds.yml \
   --tty \
-  ;
+;
 
 bosh alias-env --ca-cert <(bosh interpolate state/bosh-creds.yml --path /director_ssl/ca) -e $DIRECTOR_FLOATING_IP bosh
 bosh log-in -e bosh --client admin --client-secret admin
+
 bosh update-cloud-config -e bosh --non-interactive state/cloud-config.yml
-bosh upload-stemcell -e bosh bin/stemcell.tgz
-bosh upload-release -e bosh bin/concourse_release.tgz
-bosh upload-release -e bosh bin/garden_runc_release.tgz
+
+# CF
+bosh deploy -e bosh  -d cf cf-deployment/cf-deployment.yml \
+  -o cf-deployment/operations/scale-to-one-az.yml \
+  -o cf-deployment/operations/use-latest-stemcell.yml \
+  -o cf-deployment/operations/test/alter-ssh-proxy-redirect-uri.yml \
+  -v system_domain=system.cf.young.io \
+  --vars-store state/cf-creds.yml \
+  -n \
+;
+
+# Concourse
 bosh deploy -e bosh -d bosh-concourse bosh-concourse-deployment.yml \
   --vars-store state/concourse-creds.yml \
   -n \
-  ;
+;
