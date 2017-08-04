@@ -365,7 +365,7 @@ bosh create-env bosh-deployment/bosh.yml \
   -v openstack_project=demo \
   -v openstack_tenant=demo \
   -v openstack_username=admin \
-  -v private_key=../state/bosh.pem \ 
+  -v private_key=../state/bosh.pem \
   -v region=RegionOne \
   -v http_proxy=$HTTP_PROXY \
   -v https_proxy=$HTTP_PROXY \
