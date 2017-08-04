@@ -235,8 +235,12 @@ name: bosh-concourse
 
 releases:
 - name: concourse
+  url: https://bosh.io/d/github.com/concourse/concourse?v=2.7.0
+  sha1: 826932f631d0941b3e4cc9cb19e0017c7f989b56
   version: 2.7.0
 - name: garden-runc
+  url: https://bosh.io/d/github.com/cloudfoundry/garden-runc-release?v=1.3.0
+  sha1: 816044289381e3b7b66dd73fbcb20005594026a3
   version: 1.3.0
 
 stemcells:
@@ -379,10 +383,13 @@ bosh log-in -e bosh --client admin --client-secret admin
 
 bosh update-cloud-config -e bosh --non-interactive state/cloud-config.yml
 
+CF_STEMCELL_VERSION=$(bin/bosh int cf-deployment/cf-deployment.yml --path /stemcells/alias=default/version)
+bosh upload-stemcell -e bosh \
+  https://bosh.io/d/stemcells/bosh-openstack-kvm-ubuntu-trusty-go_agent?v=$CF_STEMCELL_VERSION
+
 # CF
 bosh deploy -e bosh  -d cf cf-deployment/cf-deployment.yml \
   -o cf-deployment/operations/scale-to-one-az.yml \
-  -o cf-deployment/operations/use-latest-stemcell.yml \
   -o cf-deployment/operations/test/alter-ssh-proxy-redirect-uri.yml \
   -v system_domain=$SYSTEM_DOMAIN \
   --vars-store state/cf-creds.yml \
