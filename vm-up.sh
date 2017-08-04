@@ -11,6 +11,8 @@ true ${ESX_THUMBPRINT:?"!"}
 true ${ESX_DATASTORE:?"!"}
 true ${ESX_NETWORK:?"!"}
 true ${VM_NAME:?"!"}
+true ${VM_PASSWORD:?"!"}
+true ${VM_AUTHORIZED_KEY:?"!"}
 true ${VM_IP:?"!"}
 true ${VM_NETMASK:?"!"}
 true ${VM_GATEWAY:?"!"}
@@ -60,7 +62,7 @@ ssh_authorized_keys:
   - $VM_AUTHORIZED_KEY
 EOF
 
-genisoimage -volid cidata -joliet -rock user-data meta-data > bin/cloud-init.iso
+mkisofs -output bin/cloud-init.iso -volid cidata -joliet -rock user-data meta-data
 qemu-img convert -O vmdk bin/cloud-init.iso bin/cloud-init.vmdk
 
 bin/govc import.ova -name $VM_NAME bin/image.ova
