@@ -369,7 +369,7 @@ bosh create-env bosh-deployment/bosh.yml \
   -v region=RegionOne \
   -v http_proxy=$HTTP_PROXY \
   -v https_proxy=$HTTP_PROXY \
-  -v no_proxy="localhost,127.0.0.1,$OPENSTACK_IP,$PRIVATE_IP,$PRIVATE_CIDR,$DIRECTOR_FLOATING_IP,$PRIVATE_GATEWAY_IP,$DNS_IP,$CONCOURSE_FLOATING_IP" \
+  -v no_proxy="localhost,127.0.0.1,$OPENSTACK_IP,$PRIVATE_IP,$PRIVATE_CIDR,$DIRECTOR_FLOATING_IP,$PRIVATE_GATEWAY_IP,$CONCOURSE_FLOATING_IP" \
   --vars-store state/bosh-creds.yml \
   --tty \
 ;
