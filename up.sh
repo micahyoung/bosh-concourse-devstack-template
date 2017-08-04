@@ -12,6 +12,7 @@ source ./state/env.sh
 true ${CONCOURSE_DEPLOYMENT_NAME:?"!"}
 true ${CONCOURSE_USERNAME:?"!"}
 true ${CONCOURSE_PASSWORD:?"!"}
+true ${SYSTEM_DOMAIN:?"!"}
 DIRECTOR_FLOATING_IP=172.18.161.254
 CONCOURSE_FLOATING_IP=172.18.161.253
 PRIVATE_CIDR=10.0.0.0/24
@@ -20,7 +21,6 @@ PRIVATE_IP=10.0.0.3
 PRIVATE_NETWORK_UUID=a7742f70-7fcc-43c2-afce-82f73e6c75c9
 OPENSTACK_IP=10.10.0.5
 HTTP_PROXY="http://10.10.0.5:8123"
-DNS_IP=8.8.8.8
 
 set -x
 
@@ -173,7 +173,7 @@ networks:
     reserved: $PRIVATE_GATEWAY_IP-$PRIVATE_IP
     cloud_properties:
       net_id: $PRIVATE_NETWORK_UUID
-      security_groups: [bosh]
+      security_groups: [bosh,cf]
     az: z1
 - name: private
   type: manual
@@ -194,7 +194,8 @@ compilation:
   reuse_compilation_vms: true
   network: private
   az: z1
-  cloud_properties: instance_type: m1.xlarge
+  cloud_properties:
+    instance_type: m1.xlarge
 EOF
 
 cat > state/bosh.pem <<EOF
@@ -383,7 +384,7 @@ bosh deploy -e bosh  -d cf cf-deployment/cf-deployment.yml \
   -o cf-deployment/operations/scale-to-one-az.yml \
   -o cf-deployment/operations/use-latest-stemcell.yml \
   -o cf-deployment/operations/test/alter-ssh-proxy-redirect-uri.yml \
-  -v system_domain=system.cf.young.io \
+  -v system_domain=$SYSTEM_DOMAIN \
   --vars-store state/cf-creds.yml \
   -n \
 ;
