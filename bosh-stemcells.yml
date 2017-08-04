@@ -1,5 +1,0 @@
-- type: replace
-  path: /resource_pools/name=vms/stemcell?
-  value:
-    url: http://s3.amazonaws.com/bosh-core-stemcells/openstack/bosh-stemcell-3363.9-openstack-kvm-ubuntu-trusty-go_agent.tgz
-    sha1: 1cddb531c96cc4022920b169a37eda71069c87dd

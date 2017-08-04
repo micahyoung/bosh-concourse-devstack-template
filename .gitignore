@@ -5,3 +5,5 @@ meta-data
 user-data
 bosh-deployment/
 cf-deployment/
+bosh-releases.yml
+bosh-stemcells.yml

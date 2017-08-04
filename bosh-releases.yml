@@ -1,7 +1,0 @@
-- type: replace
-  path: /releases/name=bosh?
-  value:
-    name: bosh
-    version: 261.4
-    url: https://bosh.io/d/github.com/cloudfoundry/bosh?v=261.4
-    sha1: 4da9cedbcc8fbf11378ef439fb89de08300ad091
