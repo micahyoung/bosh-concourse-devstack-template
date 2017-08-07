@@ -8,3 +8,4 @@ cf-deployment/
 bosh-releases.yml
 bosh-stemcells.yml
 bosh-concourse-deployment.yml
+bosh-disk-pools.yml
