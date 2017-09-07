@@ -47,7 +47,7 @@ concourse_web_vm_extensions: lb
 concourse_db_disk_type: 5GB
 EOF
 
-cat > bosh-releases.yml <<EOF
+cat > opsfiles/bosh-releases.yml <<EOF
 - type: replace
   path: /releases/name=bosh?
   value:
@@ -57,7 +57,7 @@ cat > bosh-releases.yml <<EOF
     sha1: 4da9cedbcc8fbf11378ef439fb89de08300ad091
 EOF
 
-cat > bosh-stemcells.yml <<EOF
+cat > opsfiles/bosh-stemcells.yml <<EOF
 - type: replace
   path: /resource_pools/name=vms/stemcell?
   value:
@@ -65,12 +65,18 @@ cat > bosh-stemcells.yml <<EOF
     sha1: 1cddb531c96cc4022920b169a37eda71069c87dd
 EOF
 
-cat > bosh-disk-pools.yml <<EOF
+cat > opsfiles/bosh-disk-pools.yml <<EOF
 - type: replace
   path: /disk_pools/name=disks?
   value:
     name: disks
     disk_size: 15_000
+EOF
+
+cat > opsfiles/cf-cc-disk-quota.yml <<EOF
+- type: replace
+  path: /instance_groups/name=api/jobs/name=cloud_controller_ng/properties/cc/maximum_app_disk_in_mb?
+  value: 4096
 EOF
 
 cat > state/cloud-config.yml <<EOF
@@ -349,9 +355,9 @@ bosh create-env bosh-deployment/bosh.yml \
   -o bosh-deployment/openstack/keystone-v2.yml \
   -o bosh-deployment/external-ip-not-recommended.yml \
   -o bosh-deployment/misc/proxy.yml \
-  -o bosh-releases.yml \
-  -o bosh-stemcells.yml \
-  -o bosh-disk-pools.yml \
+  -o opsfiles/bosh-releases.yml \
+  -o opsfiles/bosh-stemcells.yml \
+  -o opsfiles/bosh-disk-pools.yml \
   -v admin_password=admin \
   -v api_key=password \
   -v auth_url=http://$OPENSTACK_IP:5000/v2.0 \
@@ -381,20 +387,23 @@ bosh create-env bosh-deployment/bosh.yml \
 bosh alias-env --ca-cert <(bosh interpolate state/bosh-creds.yml --path /director_ssl/ca) -e $DIRECTOR_FLOATING_IP bosh
 bosh log-in -e bosh --client admin --client-secret admin
 
-bosh update-cloud-config -e bosh --non-interactive state/cloud-config.yml
-
 CF_STEMCELL_VERSION=$(bin/bosh int cf-deployment/cf-deployment.yml --path /stemcells/alias=default/version)
 bosh upload-stemcell -e bosh \
   https://bosh.io/d/stemcells/bosh-openstack-kvm-ubuntu-trusty-go_agent?v=$CF_STEMCELL_VERSION
+
+
+bosh update-cloud-config -e bosh --non-interactive state/cloud-config.yml
 
 # CF
 bosh deploy -e bosh  -d cf cf-deployment/cf-deployment.yml \
   -o cf-deployment/operations/scale-to-one-az.yml \
   -o cf-deployment/operations/test/alter-ssh-proxy-redirect-uri.yml \
+  -o opsfiles/cf-cc-disk-quota.yml \
   -v system_domain=$SYSTEM_DOMAIN \
   --vars-store state/cf-creds.yml \
   -n \
 ;
+
 
 # Concourse
 bosh deploy -e bosh -d bosh-concourse bosh-concourse-deployment.yml \
