@@ -21,7 +21,7 @@ DEBIAN_FRONTEND=noninteractive sudo apt-get install -qqy git htop || sudo yum in
 
 sudo chown stack:stack /home/stack
 cd /home/stack
-git clone --branch=stable/newton $GIT_BASE/openstack-dev/devstack.git
+git clone --branch=stable/ocata $GIT_BASE/openstack-dev/devstack.git
 cd devstack
 
 cat > local.conf <<EOF
@@ -36,21 +36,6 @@ ADMIN_PASSWORD=password
 DATABASE_PASSWORD=password
 RABBIT_PASSWORD=password
 SERVICE_PASSWORD=password
-SERVICE_TOKEN=password
-
-VOLUME_BACKING_FILE_SIZE=102400M
-
-# Services:
-## Enable Neutron networking
-disable_service n-net
-enable_service q-svc
-enable_service q-agt
-enable_service q-dhcp
-enable_service q-l3
-enable_service q-meta
-
-## Disable tempest
-disable_service tempest
 
 ## Neutron options
 Q_USE_SECGROUP=True
@@ -65,9 +50,6 @@ Q_USE_PROVIDERNET_FOR_PUBLIC=True
 OVS_PHYSICAL_BRIDGE=br-ex
 PUBLIC_BRIDGE=br-ex
 OVS_BRIDGE_MAPPINGS=public:br-ex
-
-# Workaround until this newton/stable bug is fixed: https://bugs.launchpad.net/devstack/+bug/1667545
-REQUIREMENTS_BRANCH=refs/changes/27/454927/1
 
 # Speedups
 GIT_BASE="$GIT_BASE"
