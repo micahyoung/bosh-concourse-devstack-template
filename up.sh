@@ -343,10 +343,12 @@ fi
 
 if ! [ -d bosh-deployment ]; then
   git clone https://github.com/cloudfoundry/bosh-deployment.git
+  git checkout d5e1ec9
 fi
 
 if ! [ -d cf-deployment ]; then
   git clone https://github.com/cloudfoundry/cf-deployment.git
+  git checkout v0.20.0
 fi
 
 bosh create-env bosh-deployment/bosh.yml \
