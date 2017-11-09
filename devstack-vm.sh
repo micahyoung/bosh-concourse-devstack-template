@@ -13,7 +13,7 @@ su -l stack `pwd`/$0
 
 stack)
 host_ip="10.10.0.4"
-network_interface=ens192
+network_interface=ens224
 GIT_BASE="https://github.com"
 
 DEBIAN_FRONTEND=noninteractive sudo apt-get -qqy update || sudo yum update -qy

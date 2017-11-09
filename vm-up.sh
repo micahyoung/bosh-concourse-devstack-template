@@ -73,4 +73,6 @@ bin/govc vm.disk.attach -disk /$VM_NAME/cloud-init.vmdk -link=false
 bin/govc vm.disk.change -vm $VM_NAME -disk.key 2000 -size 300G
 bin/govc device.remove floppy-8000 
 
+bin/govc vm.network.add -vm $VM_NAME -net "VM Network"
+
 bin/govc snapshot.create -vm $VM_NAME initial-snapshot
