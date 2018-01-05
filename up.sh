@@ -341,7 +341,7 @@ fi
 
 if ! [ -d cf-deployment ]; then
   git clone https://github.com/cloudfoundry/cf-deployment.git
-  pushd bosh-deployment
+  pushd cf-deployment
     git checkout v0.20.0
   popd
 fi
