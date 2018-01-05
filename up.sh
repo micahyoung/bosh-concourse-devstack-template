@@ -326,18 +326,10 @@ update:
   update_watch_time: 1000-60000
 EOF
 
-if ! dpkg -l build-essential ruby polipo; then
-  sudo mkdir /etc/polipo
-  sudo tee /etc/polipo/config 2>/dev/null <<EOF
-logSyslog = true
-logFile = /var/log/polipo/polipo.log
-proxyAddress = "0.0.0.0"    # IPv4 only
-allowedClients = 127.0.0.1, 172.18.161.0/24, $OPENSTACK_IP, $PRIVATE_CIDR
-EOF
-
+if ! dpkg -l build-essential ruby; then
   DEBIAN_FRONTEND=noninteractive sudo apt-get -qqy update
   DEBIAN_FRONTEND=noninteractive sudo apt-get install -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" -qqy \
-    build-essential zlibc zlib1g-dev ruby ruby-dev openssl libxslt-dev libxml2-dev libssl-dev libreadline6 libreadline6-dev libyaml-dev libsqlite3-dev sqlite3 polipo
+    build-essential zlibc zlib1g-dev ruby ruby-dev openssl libxslt-dev libxml2-dev libssl-dev libreadline6 libreadline6-dev libyaml-dev libsqlite3-dev sqlite3
 fi
 
 if ! [ -d bosh-deployment ]; then
