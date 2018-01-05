@@ -9,11 +9,12 @@ useradd -m -s /bin/bash stack
 echo -e "stack ALL=(ALL) NOPASSWD:ALL\nDefaults:stack !requiretty" > /etc/sudoers.d/0-stack
 chmod 0777 $0
 su -l stack `pwd`/$0
+
 ;;
 
 stack)
 host_ip="10.10.0.4"
-network_interface=ens224
+network_interface=ens32
 GIT_BASE="https://github.com"
 
 DEBIAN_FRONTEND=noninteractive sudo apt-get -qqy update || sudo yum update -qy
@@ -26,12 +27,6 @@ cd devstack
 
 cat > local.conf <<EOF
 [[local|localrc]]
-HOST_IP=$host_ip
-SERVICE_HOST=$host_ip
-MYSQL_HOST=$host_ip
-RABBIT_HOST=$host_ip
-GLANCE_HOSTPORT=$host_ip:9292
-
 ADMIN_PASSWORD=password
 DATABASE_PASSWORD=password
 RABBIT_PASSWORD=password
@@ -41,21 +36,21 @@ SERVICE_PASSWORD=password
 Q_USE_SECGROUP=True
 FIXED_RANGE=10.0.0.0/24
 FLOATING_RANGE=172.18.161.0/24
-PUBLIC_NETWORK_GATEWAY=172.18.161.1
+PUBLIC_NETWORK_GATEWAY=10.10.0.5
 PUBLIC_INTERFACE=$network_interface
-Q_FLOATING_ALLOCATION_POOL=start=172.18.161.11,end=172.18.161.254
-
-# Open vSwitch provider networking configuration
-Q_USE_PROVIDERNET_FOR_PUBLIC=True
-OVS_PHYSICAL_BRIDGE=br-ex
-PUBLIC_BRIDGE=br-ex
-OVS_BRIDGE_MAPPINGS=public:br-ex
 
 # Speedups
 GIT_BASE="$GIT_BASE"
 EOF
 
 cat > post-stack.sh <<EOF
+#IP forward rules
+ifconfig ens32 up
+iptables -t nat -I POSTROUTING -o ens32 -s 10.0.0.0/24 -j MASQUERADE
+iptables -t nat -I POSTROUTING -o ens32 -s 172.18.161.0/24 -j MASQUERADE
+iptables -I FORWARD -s 10.0.0.0/24 -j ACCEPT
+iptables -I FORWARD -s 172.18.161.0/24 -j ACCEPT
+
 source ./openrc admin demo
 
 #Bosh

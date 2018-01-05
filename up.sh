@@ -14,7 +14,6 @@ true ${CONCOURSE_USERNAME:?"!"}
 true ${CONCOURSE_PASSWORD:?"!"}
 true ${SYSTEM_DOMAIN:?"!"}
 true ${OPENSTACK_IP:?"!"}
-true ${HTTP_PROXY:?"!"}
 true ${PRIVATE_NETWORK_UUID:?"!"}
 DIRECTOR_FLOATING_IP=172.18.161.254
 CONCOURSE_FLOATING_IP=172.18.161.253
@@ -360,7 +359,6 @@ bosh create-env bosh-deployment/bosh.yml \
   -o bosh-deployment/openstack/cpi.yml \
   -o bosh-deployment/openstack/keystone-v2.yml \
   -o bosh-deployment/external-ip-not-recommended.yml \
-  -o bosh-deployment/misc/proxy.yml \
   -o opsfiles/bosh-releases.yml \
   -o opsfiles/bosh-stemcells.yml \
   -o opsfiles/bosh-disk-pools.yml \
@@ -383,9 +381,6 @@ bosh create-env bosh-deployment/bosh.yml \
   -v openstack_username=admin \
   -v private_key=../state/bosh.pem \
   -v region=RegionOne \
-  -v http_proxy=$HTTP_PROXY \
-  -v https_proxy=$HTTP_PROXY \
-  -v no_proxy="localhost,127.0.0.1,$OPENSTACK_IP,$PRIVATE_IP,$PRIVATE_CIDR,$DIRECTOR_FLOATING_IP,$PRIVATE_GATEWAY_IP,$CONCOURSE_FLOATING_IP" \
   --vars-store state/bosh-creds.yml \
   --tty \
 ;
