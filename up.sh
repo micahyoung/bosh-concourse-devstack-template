@@ -3,9 +3,13 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-if ! [ -d state/ ]; then
+if ! [ -d state ]; then
   exit "No State, exiting"
   exit 1
+fi
+
+if ! [ -d opsfiles ]; then
+  mkdir opsfiles
 fi
 
 source ./state/env.sh
