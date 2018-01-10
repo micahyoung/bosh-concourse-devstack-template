@@ -22,7 +22,7 @@ DEBIAN_FRONTEND=noninteractive sudo apt-get install -qqy git htop || sudo yum in
 
 sudo chown stack:stack /home/stack
 cd /home/stack
-git clone --branch=stable/ocata $GIT_BASE/openstack-dev/devstack.git
+git clone --branch=stable/newton $GIT_BASE/openstack-dev/devstack.git
 cd devstack
 
 cat > local.conf <<EOF
@@ -32,12 +32,26 @@ DATABASE_PASSWORD=password
 RABBIT_PASSWORD=password
 SERVICE_PASSWORD=password
 
+CINDER_BRANCH=newton-eol
+GLANCE_BRANCH=newton-eol
+HORIZON_BRANCH=newton-eol
+KEYSTONECLIENT_BRANCH=newton-eol
+KEYSTONE_BRANCH=newton-eol
+NEUTRON_BRANCH=newton-eol
+NOVACLIENT_BRANCH=newton-eol
+NOVA_BRANCH=stable/newton
+REQUIREMENTS_BRANCH=stable/newton
+SWIFT_BRANCH=newton-eol
+
 ## Neutron options
 Q_USE_SECGROUP=True
-FIXED_RANGE=10.0.0.0/24
+FIXED_RANGE=10.0.0.0/22
 FLOATING_RANGE=172.18.161.0/24
 PUBLIC_NETWORK_GATEWAY=10.10.0.5
 PUBLIC_INTERFACE=$network_interface
+
+# Disable unused services
+disable_service n-novnc
 
 # Speedups
 GIT_BASE="$GIT_BASE"
