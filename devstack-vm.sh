@@ -4,6 +4,10 @@ set -ex
 case `whoami` in
 
 root)
+# required for private network routing
+# TODO: change to use ens32 instead
+iptables -t nat -A POSTROUTING -o ens192 -j MASQUERADE
+
 # set up stack user
 useradd -m -s /bin/bash stack
 echo -e "stack ALL=(ALL) NOPASSWD:ALL\nDefaults:stack !requiretty" > /etc/sudoers.d/0-stack
@@ -61,12 +65,6 @@ EOF
 
 cat > post-stack.sh <<EOF
 #IP forward rules
-ifconfig ens32 up
-iptables -t nat -I POSTROUTING -o ens32 -s 10.0.0.0/24 -j MASQUERADE
-iptables -t nat -I POSTROUTING -o ens32 -s 172.18.161.0/24 -j MASQUERADE
-iptables -I FORWARD -s 10.0.0.0/24 -j ACCEPT
-iptables -I FORWARD -s 172.18.161.0/24 -j ACCEPT
-
 source ./openrc admin demo
 
 #Bosh
