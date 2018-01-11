@@ -386,8 +386,9 @@ bosh log-in -e bosh --client admin --client-secret admin
 
 CF_STEMCELL_VERSION=$(bin/bosh int cf-deployment/cf-deployment.yml --path /stemcells/alias=default/version)
 bosh upload-stemcell -e bosh \
+  --name=bosh-openstack-kvm-ubuntu-trusty-go_agent \
+  --version=$CF_STEMCELL_VERSION \
   https://bosh.io/d/stemcells/bosh-openstack-kvm-ubuntu-trusty-go_agent?v=$CF_STEMCELL_VERSION
-
 
 bosh update-cloud-config -e bosh --non-interactive state/cloud-config.yml
 
