@@ -50,24 +50,6 @@ concourse_web_vm_extensions: lb
 concourse_db_disk_type: 5GB
 EOF
 
-cat > opsfiles/bosh-releases.yml <<EOF
-- type: replace
-  path: /releases/name=bosh?
-  value:
-    name: bosh
-    version: 261.4
-    url: https://bosh.io/d/github.com/cloudfoundry/bosh?v=261.4
-    sha1: 4da9cedbcc8fbf11378ef439fb89de08300ad091
-EOF
-
-cat > opsfiles/bosh-stemcells.yml <<EOF
-- type: replace
-  path: /resource_pools/name=vms/stemcell?
-  value:
-    url: http://s3.amazonaws.com/bosh-core-stemcells/openstack/bosh-stemcell-3363.9-openstack-kvm-ubuntu-trusty-go_agent.tgz
-    sha1: 1cddb531c96cc4022920b169a37eda71069c87dd
-EOF
-
 cat > opsfiles/bosh-disk-pools.yml <<EOF
 - type: replace
   path: /disk_pools/name=disks?
@@ -355,8 +337,6 @@ bosh create-env bosh-deployment/bosh.yml \
   -o bosh-deployment/openstack/cpi.yml \
   -o bosh-deployment/openstack/keystone-v2.yml \
   -o bosh-deployment/external-ip-not-recommended.yml \
-  -o opsfiles/bosh-releases.yml \
-  -o opsfiles/bosh-stemcells.yml \
   -o opsfiles/bosh-disk-pools.yml \
   -v admin_password=admin \
   -v api_key=password \
