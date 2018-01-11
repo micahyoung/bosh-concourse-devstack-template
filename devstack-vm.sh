@@ -79,6 +79,7 @@ openstack keypair create --public-key=id_bosh_rsa.pub bosh
 openstack security group create bosh
 openstack security group rule create bosh --protocol=tcp --dst-port=22
 openstack security group rule create bosh --protocol=tcp --dst-port=6868
+openstack security group rule create bosh --protocol=tcp --dst-port=8443
 openstack security group rule create bosh --protocol=tcp --dst-port=25555
 openstack security group rule create bosh --protocol=tcp --src-group=bosh
 openstack security group rule create bosh --protocol=udp --src-group=bosh

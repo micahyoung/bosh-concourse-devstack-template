@@ -321,7 +321,7 @@ fi
 if ! [ -d bosh-deployment ]; then
   git clone https://github.com/cloudfoundry/bosh-deployment.git
   pushd bosh-deployment
-    git checkout d5e1ec9
+    git checkout 3b1c164
   popd
 fi
 
@@ -337,6 +337,8 @@ bosh create-env bosh-deployment/bosh.yml \
   -o bosh-deployment/openstack/cpi.yml \
   -o bosh-deployment/openstack/keystone-v2.yml \
   -o bosh-deployment/external-ip-not-recommended.yml \
+  -o bosh-deployment/uaa.yml \
+  -o bosh-deployment/credhub.yml \
   -o opsfiles/bosh-disk-pools.yml \
   -v admin_password=admin \
   -v api_key=password \
