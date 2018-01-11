@@ -199,12 +199,12 @@ networks:
   az: z1
 
 compilation:
-  workers: 4
+  workers: 3
   reuse_compilation_vms: true
   network: private
   az: z1
   cloud_properties:
-    instance_type: m1.xlarge
+    instance_type: m1.large
 EOF
 
 cat > state/bosh.pem <<EOF
