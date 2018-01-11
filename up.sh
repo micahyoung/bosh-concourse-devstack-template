@@ -19,7 +19,6 @@ true ${CONCOURSE_PASSWORD:?"!"}
 true ${SYSTEM_DOMAIN:?"!"}
 true ${OPENSTACK_IP:?"!"}
 true ${PRIVATE_NETWORK_UUID:?"!"}
-DIRECTOR_FLOATING_IP=172.18.161.254
 CONCOURSE_FLOATING_IP=172.18.161.253
 PRIVATE_CIDR=10.0.0.0/24
 PRIVATE_GATEWAY_IP=10.0.0.1
@@ -336,7 +335,6 @@ bosh create-env bosh-deployment/bosh.yml \
   --state state/bosh-deployment-state.json \
   -o bosh-deployment/openstack/cpi.yml \
   -o bosh-deployment/openstack/keystone-v2.yml \
-  -o bosh-deployment/external-ip-not-recommended.yml \
   -o bosh-deployment/uaa.yml \
   -o bosh-deployment/credhub.yml \
   -o opsfiles/bosh-disk-pools.yml \
@@ -347,7 +345,6 @@ bosh create-env bosh-deployment/bosh.yml \
   -v default_key_name=bosh \
   -v default_security_groups=[bosh] \
   -v director_name=bosh \
-  -v external_ip=$DIRECTOR_FLOATING_IP \
   -v internal_cidr=$PRIVATE_CIDR \
   -v internal_gw=$PRIVATE_GATEWAY_IP \
   -v internal_ip=$PRIVATE_IP \
@@ -363,7 +360,7 @@ bosh create-env bosh-deployment/bosh.yml \
   --tty \
 ;
 
-bosh alias-env --ca-cert <(bosh interpolate state/bosh-creds.yml --path /director_ssl/ca) -e $DIRECTOR_FLOATING_IP bosh
+bosh alias-env --ca-cert <(bosh interpolate state/bosh-creds.yml --path /director_ssl/ca) -e $PRIVATE_IP bosh
 bosh log-in -e bosh --client admin --client-secret admin
 
 CF_STEMCELL_VERSION=$(bin/bosh int cf-deployment/cf-deployment.yml --path /stemcells/alias=default/version)
