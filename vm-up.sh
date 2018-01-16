@@ -43,8 +43,8 @@ network-interfaces: |
   auto lo
   iface lo inet loopback
 
-  auto ens32
-  iface ens32 inet dhcp
+  auto ens224
+  iface ens224 inet dhcp
 
   auto ens192
   iface ens192 inet static

@@ -6,7 +6,7 @@ case `whoami` in
 root)
 # required for private network routing
 # TODO: change to use ens32 instead
-iptables -t nat -A POSTROUTING -o ens192 -j MASQUERADE
+iptables -t nat -A POSTROUTING -o ens224 -j MASQUERADE
 
 # set up stack user
 useradd -m -s /bin/bash stack
@@ -18,7 +18,7 @@ su -l stack `pwd`/$0
 
 stack)
 host_ip="10.10.0.4"
-network_interface=ens32
+network_interface=ens224
 GIT_BASE="https://github.com"
 
 DEBIAN_FRONTEND=noninteractive sudo apt-get -qqy update || sudo yum update -qy
