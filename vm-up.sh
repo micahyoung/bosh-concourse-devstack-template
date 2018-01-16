@@ -69,7 +69,7 @@ bin/govc import.vmdk -force=true bin/cloud-init.vmdk /$VM_NAME/
 bin/govc vm.change -vm $VM_NAME -c 6 -m 130000 -nested-hv-enabled=true -sync-time-with-host=true
 
 bin/govc vm.disk.attach -disk /$VM_NAME/cloud-init.vmdk -link=false
-bin/govc vm.disk.change -vm $VM_NAME -disk.key 2000 -size 300G
+bin/govc vm.disk.change -vm $VM_NAME -disk.key 2000 -size 550G
 bin/govc device.remove floppy-8000 
 
 bin/govc vm.network.add -vm $VM_NAME -net "VM Network" -net.adapter vmxnet3
