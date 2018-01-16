@@ -4,10 +4,6 @@ set -ex
 case `whoami` in
 
 root)
-# required for private network routing
-# TODO: change to use ens32 instead
-iptables -t nat -A POSTROUTING -o ens224 -j MASQUERADE
-
 # set up stack user
 useradd -m -s /bin/bash stack
 echo -e "stack ALL=(ALL) NOPASSWD:ALL\nDefaults:stack !requiretty" > /etc/sudoers.d/0-stack
@@ -119,6 +115,10 @@ openstack flavor create r3.xlarge --public --vcpus 1 --ram 16384 --disk 10 --eph
 
 #output private net uuid
 openstack network show private -c id
+
+# required for private network routing
+echo Now run:
+echo sudo iptables -t nat -A POSTROUTING -o br-ex -j MASQUERADE
 EOF
 
 chmod +x post-stack.sh
