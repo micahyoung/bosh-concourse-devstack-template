@@ -15,8 +15,6 @@ true ${VM_PASSWORD:?"!"}
 true ${VM_AUTHORIZED_KEY:?"!"}
 true ${VM_IP:?"!"}
 true ${VM_NETMASK:?"!"}
-true ${VM_GATEWAY:?"!"}
-true ${VM_DNS_SERVERS:?"!"}
 
 mkdir -p bin
 if ! [ -f bin/govc ]; then
@@ -45,12 +43,13 @@ network-interfaces: |
   auto lo
   iface lo inet loopback
 
+  auto ens32
+  iface ens32 inet dhcp
+
   auto ens192
   iface ens192 inet static
     address $VM_IP
     netmask $VM_NETMASK
-    gateway $VM_GATEWAY
-    dns-nameservers $VM_DNS_SERVERS
 EOF
 
 cat > user-data <<EOF
