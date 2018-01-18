@@ -110,7 +110,7 @@ openstack flavor create m1.director --public --vcpus 1 --ram 2048 --disk 15
 openstack flavor create m1.small --public --vcpus 1 --ram 1024 --disk 10
 openstack flavor create m1.medium --public --vcpus 1 --ram 2048 --disk 10
 openstack flavor create m1.large --public --vcpus 1 --ram 8192 --disk 15
-openstack flavor create m1.xlarge --public --vcpus 1 --ram 16384 --disk 15
+openstack flavor create m1.xlarge --public --vcpus 1 --ram 16384 --disk 100
 openstack flavor create r3.xlarge --public --vcpus 1 --ram 16384 --disk 10 --ephemeral 32
 
 #output private net uuid
