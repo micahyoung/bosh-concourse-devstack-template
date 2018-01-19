@@ -25,6 +25,7 @@ cd /home/stack
 git clone --branch=stable/newton $GIT_BASE/openstack-dev/devstack.git
 cd devstack
 
+# ref https://docs.openstack.org/horizon/newton/ref/local_conf.html
 cat > local.conf <<EOF
 [[local|localrc]]
 ADMIN_PASSWORD=password
@@ -52,8 +53,23 @@ FLOATING_RANGE=172.18.161.0/24
 PUBLIC_NETWORK_GATEWAY=172.18.161.1
 PUBLIC_INTERFACE=$network_interface
 
-# Enable swift
+# Enable Swift (Object Store) without replication
 enable_service s-proxy s-object s-container s-account
+SWIFT_HASH=66a3d6b56c1f479c8b4e70ab5c2000f5
+SWIFT_REPLICAS=1
+SWIFT_DATA_DIR=$DEST/data/swift
+
+# Enable Neutron (Networking)
+# to use nova net rather than neutron, comment out the following group
+disable_service n-net
+enable_plugin neutron https://git.openstack.org/openstack/neutron
+enable_service q-svc
+enable_service q-agt
+enable_service q-dhcp
+enable_service q-l3
+enable_service q-meta
+enable_service q-metering
+enable_service q-qos
 
 # Disable unused services
 disable_service n-novnc
