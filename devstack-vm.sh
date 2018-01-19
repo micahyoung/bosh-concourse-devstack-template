@@ -52,6 +52,9 @@ FLOATING_RANGE=172.18.161.0/24
 PUBLIC_NETWORK_GATEWAY=172.18.161.1
 PUBLIC_INTERFACE=$network_interface
 
+# Enable swift
+enable_service s-proxy s-object s-container s-account
+
 # Disable unused services
 disable_service n-novnc
 
