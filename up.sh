@@ -142,6 +142,9 @@ cat > opsfiles/concourse-init-opsfile.yml <<EOF
   path: /instance_groups/name=concourse/jobs/name=groundcrew/properties/tsa/host_public_key?
   value: ((tsa_host_key.public_key))
 - type: replace
+  path: /instance_groups/name=concourse/jobs/name=groundcrew/properties/tags?
+  value: [openstack]
+- type: replace
   path: /instance_groups/name=concourse/jobs/name=groundcrew/properties/tsa/port?
   value: 2222
 - type: replace
