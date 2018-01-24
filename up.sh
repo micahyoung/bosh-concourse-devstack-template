@@ -192,7 +192,7 @@ if ! dpkg -l build-essential ruby; then
     build-essential zlibc zlib1g-dev ruby ruby-dev openssl libxslt-dev libxml2-dev libssl-dev libreadline6 libreadline6-dev libyaml-dev libsqlite3-dev sqlite3
 fi
 
-if ! grep -q opsman <(openstack flavor list -c Name -f value); then
+if ! grep -q concourse <(openstack flavor list -c Name -f value); then
   openstack flavor create \
     concourse \
     --public \
