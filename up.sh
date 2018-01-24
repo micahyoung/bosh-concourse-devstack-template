@@ -23,7 +23,14 @@ CONCOURSE_FLOATING_IP=172.18.161.253
 PRIVATE_CIDR=10.0.0.0/24
 PRIVATE_GATEWAY_IP=10.0.0.1
 PRIVATE_IP=10.0.0.3
+OPENSTACK_USERNAME=admin
+OPENSTACK_PASSWORD=password
+OPENSTACK_PROJECT=demo
 
+export OS_PROJECT_NAME=$OPENSTACK_PROJECT
+export OS_USERNAME=$OPENSTACK_USERNAME
+export OS_PASSWORD=$OPENSTACK_PASSWORD
+export OS_AUTH_URL=http://$OPENSTACK_HOST/v2.0
 set -x
 
 mkdir -p bin
@@ -97,7 +104,7 @@ cat > opsfiles/concourse-init-opsfile.yml <<EOF
         sha1: 4f3501a3c374e7e107ee1219ff08d55aa5001331
         url: https://bosh.io/d/stemcells/bosh-openstack-kvm-ubuntu-trusty-go_agent?v=3468.19
       cloud_properties:
-        instance_type: m1.large
+        instance_type: concourse
       env:
         bosh:
           password: '*'
@@ -118,9 +125,6 @@ cat > opsfiles/concourse-init-opsfile.yml <<EOF
 - type: replace
   path: /instance_groups/name=concourse/resource_pool?
   value: vms 
-- type: replace
-  path: /instance_groups/name=concourse/persistent_disk
-  value: 30_720
 - type: replace
   path: /instance_groups/name=concourse/networks?
   value: 
@@ -188,6 +192,16 @@ if ! dpkg -l build-essential ruby; then
     build-essential zlibc zlib1g-dev ruby ruby-dev openssl libxslt-dev libxml2-dev libssl-dev libreadline6 libreadline6-dev libyaml-dev libsqlite3-dev sqlite3
 fi
 
+if ! grep -q opsman <(openstack flavor list -c Name -f value); then
+  openstack flavor create \
+    concourse \
+    --public \
+    --vcpus 2 \
+    --ram 8192 \
+    --disk 30 \
+  ;
+fi
+
 bosh create-env state/concourse-manifest.yml \
   --state state/concourse-state.json \
   -o opsfiles/concourse-init-opsfile.yml \
@@ -202,16 +216,16 @@ bosh create-env state/concourse-manifest.yml \
   -v internal_gw=$PRIVATE_GATEWAY_IP \
   -v internal_ip=$PRIVATE_IP \
   -v net_id=$PRIVATE_NETWORK_UUID \
-  -v openstack_domain=nova \
-  -v openstack_password=password \
-  -v openstack_project=demo \
-  -v openstack_tenant=demo \
-  -v openstack_username=admin \
+  -v openstack_password=$OPENSTACK_PASSWORD \
+  -v openstack_project=$OPENSTACK_PROJECT \
+  -v openstack_tenant=$OPENSTACK_PROJECT \
+  -v openstack_username=$OPENSTACK_USERNAME \
+  -v openstack_domain=demo \
   -v private_key=bosh.pem \
   -v region=RegionOne \
   -v vm_type=m1.medium \
   -v concourse_version=3.8.0 \
-  -v deployment_name=concourse \
+  -v deployment_name=$CONCOURSE_DEPLOYMENT_NAME \
   -v garden_runc_version=1.9.0 \
   -v network_name=private \
   -v postgres_password=password \
