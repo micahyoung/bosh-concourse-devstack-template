@@ -125,6 +125,9 @@ cat > opsfiles/concourse-init-opsfile.yml <<EOF
   path: /instance_groups/name=concourse/resource_pool?
   value: vms 
 - type: replace
+  path: /instance_groups/name=concourse/persistent_disk
+  value: 30_720
+- type: replace
   path: /instance_groups/name=concourse/networks?
   value: 
     - default:
