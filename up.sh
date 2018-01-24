@@ -98,6 +98,7 @@ cat > opsfiles/concourse-init-opsfile.yml <<EOF
         url: https://bosh.io/d/stemcells/bosh-openstack-kvm-ubuntu-trusty-go_agent?v=3468.19
       cloud_properties:
         instance_type: m1.large
+      disk_size: 30_000
       env:
         bosh:
           password: '*'
