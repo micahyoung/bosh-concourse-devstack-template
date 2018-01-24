@@ -67,8 +67,7 @@ cat > opsfiles/concourse-init-opsfile.yml <<EOF
         region: ((region))
         default_key_name: ((default_key_name))
         default_security_groups: ((default_security_groups))
-        use_dhcp: false #?
-        config_drive: cdrom #?
+        human_readable_vm_names: true
       ntp:
       - time1.google.com
       - time2.google.com
