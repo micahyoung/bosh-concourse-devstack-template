@@ -64,8 +64,11 @@ EOF
 xorrisofs -volid cidata -joliet -rock user-data meta-data > bin/cloud-init.iso
 qemu-img convert -O vmdk bin/cloud-init.iso bin/cloud-init.vmdk
 
-bin/govc import.spec bin/image.ova | jq 'del(.Deployment)' > import.spec
-bin/govc import.ova -name $VM_NAME -options import.spec bin/image.ova
+bin/govc import.ova \
+  -name $VM_NAME \
+  -options <(bin/govc import.spec bin/image.ova | jq 'del(.Deployment)') \
+  bin/image.ova \
+;
 bin/govc import.vmdk -force=true bin/cloud-init.vmdk /$VM_NAME/
 bin/govc vm.change -vm $VM_NAME -c 6 -m 130000 -nested-hv-enabled=true -sync-time-with-host=true
 
