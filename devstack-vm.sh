@@ -57,12 +57,11 @@ PUBLIC_INTERFACE=$network_interface
 enable_service s-proxy s-object s-container s-account
 SWIFT_HASH=66a3d6b56c1f479c8b4e70ab5c2000f5
 SWIFT_REPLICAS=1
-SWIFT_DATA_DIR=$DEST/data/swift
+SWIFT_DATA_DIR=/opt/stack/data/swift
 
 # Enable Neutron (Networking)
 # to use nova net rather than neutron, comment out the following group
 disable_service n-net
-enable_plugin neutron https://git.openstack.org/openstack/neutron
 enable_service q-svc
 enable_service q-agt
 enable_service q-dhcp
