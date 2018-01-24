@@ -103,6 +103,12 @@ cat > opsfiles/concourse-init-opsfile.yml <<EOF
         bosh:
           password: '*'
 - type: replace
+  path: /disk_pools?
+  value: 
+    disk_pools:
+    - name: default
+      disk_size: 30_000
+- type: replace
   path: /networks?
   value:
   - name: default
