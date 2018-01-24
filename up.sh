@@ -17,7 +17,7 @@ true ${CONCOURSE_DEPLOYMENT_NAME:?"!"}
 true ${CONCOURSE_USERNAME:?"!"}
 true ${CONCOURSE_PASSWORD:?"!"}
 true ${SYSTEM_DOMAIN:?"!"}
-true ${OPENSTACK_IP:?"!"}
+true ${OPENSTACK_HOST:?"!"}
 true ${PRIVATE_NETWORK_UUID:?"!"}
 CONCOURSE_FLOATING_IP=172.18.161.253
 PRIVATE_CIDR=10.0.0.0/24
@@ -207,7 +207,7 @@ bosh create-env state/concourse-manifest.yml \
   -o opsfiles/concourse-init-opsfile.yml \
   -v admin_password=admin \
   -v api_key=password \
-  -v auth_url=http://$OPENSTACK_IP:5000/v2.0 \
+  -v auth_url=http://$OPENSTACK_HOST/v2.0 \
   -v az=nova \
   -v default_key_name=bosh \
   -v default_security_groups=[bosh] \
