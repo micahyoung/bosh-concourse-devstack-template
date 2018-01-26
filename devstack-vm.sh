@@ -54,10 +54,11 @@ PUBLIC_NETWORK_GATEWAY=172.18.161.1
 PUBLIC_INTERFACE=$network_interface
 
 # Enable Swift (Object Store) without replication
-enable_service s-proxy s-object s-container s-account
+enable_service s-proxy s-object s-container s-account swift3
 SWIFT_HASH=66a3d6b56c1f479c8b4e70ab5c2000f5
 SWIFT_REPLICAS=1
 SWIFT_DATA_DIR=/opt/stack/data/swift
+SWIFT_LOOPBACK_DISK_SIZE=20G
 
 # Enable Neutron (Networking)
 # to use nova net rather than neutron, comment out the following group
@@ -71,7 +72,7 @@ enable_service q-metering
 enable_service q-qos
 
 # Disable unused services
-disable_service n-novnc
+disable_service n-novnc tempest
 
 # Speedups
 GIT_BASE="$GIT_BASE"
@@ -86,6 +87,7 @@ openstack quota set demo --instances 25
 openstack quota set demo --cores 25
 openstack quota set demo --volumes 20
 openstack quota set demo --ram 122880
+openstack quota set demo --networks 10
 cat > id_bosh_rsa.pub <<EOF2
 ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDjiROOp2ClfiN0/9k+le/jMqHTI0/akgggCZ2hDf9aGhNFaVwdnU/yrKtCIobYv6LPX/uwQBwXUgWQ5ezlffe79RWJs7OQYEsN8aOSlqcBqfap0f2K0sQpU9jYvJuUdOw/pzpHAGo5yFlW8oCSJke/DU3LGqJkw/CVOCq1pohczVgYiBia0Un4l9CceT22bb2ZxMfy26jw0VtX4cC2UtVyfXI9xjaqbzFCJwQcIe8ECom0e7RLF0aglCSs+gwoRg/HK7NjnFPLVL0CuB4aBD+B6eLtI0LxB1ixcsnRi/UXeLFKfs+jwysUEgcN1H5pY8N/X44yNQ+OkMXZ/7PwpH/d vcap@bosh-init 
 EOF2
